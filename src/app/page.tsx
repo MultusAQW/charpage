@@ -42,31 +42,37 @@ export default async function Home({ searchParams }: HomeProps) {
   return (
     <main className="flex min-h-screen flex-col container space-y-4 py-4">
       <SearchInput name={parsed.name} />
-      <Separator className="bg-black" />
-      <div className="flex justify-center capitalize font-extrabold text-3xl">
-        {parsed.name}
-      </div>
-      <div className="flex justify-center">
-        <Equipped name={parsed.name} />
-      </div>
-      <Separator className="bg-black" />
-      <React.Suspense fallback="Loading ...">
-        <Badges name={parsed.name} />
-      </React.Suspense>
-      <Separator className="bg-black" />
-      <React.Suspense fallback="Loading ...">
-        <Items name={parsed.name} />
-      </React.Suspense>
+      {!parsed.name && (
+        <p className="text-center">Try searching an in-game name ...</p>
+      )}
+      {!!parsed.name && (
+        <>
+          <Separator className="bg-black" />
+          <div className="flex justify-center capitalize font-extrabold text-3xl">
+            {parsed.name}
+          </div>
+          <div className="flex justify-center">
+            <Equipped name={parsed.name} />
+          </div>
+          <Separator className="bg-black" />
+          <React.Suspense fallback="Loading ...">
+            <Badges name={parsed.name} />
+          </React.Suspense>
+          <Separator className="bg-black" />
+          <React.Suspense fallback="Loading ...">
+            <Items name={parsed.name} />
+          </React.Suspense>
+        </>
+      )}
     </main>
   );
 }
 
 type SubComponentProps = {
-  name: string | undefined;
+  name: string;
 };
 
 async function Equipped({ name }: SubComponentProps) {
-  if (!name) return null;
   const equippedItems = await getEquippedItems(name);
   if (!equippedItems) throw new Error("Prolly ratelimited.");
   const list = Object.entries(equippedItems.data).map((d) => ({
@@ -98,7 +104,7 @@ async function Equipped({ name }: SubComponentProps) {
   );
 }
 
-function SearchInput({ name }: SubComponentProps) {
+function SearchInput({ name }: Partial<SubComponentProps>) {
   return (
     <div className="flex justify-center items-center">
       <form
@@ -109,7 +115,7 @@ function SearchInput({ name }: SubComponentProps) {
           redirect(`/?name=${name}`);
         }}
       >
-        <Input name="name" defaultValue={name} />
+        <Input name="name" defaultValue={name} placeholder="Alina" />
         <SubmitButton className={buttonVariants()}>Search</SubmitButton>
       </form>
     </div>
@@ -117,7 +123,6 @@ function SearchInput({ name }: SubComponentProps) {
 }
 
 async function Items({ name }: SubComponentProps) {
-  if (!name) return null;
   const items = await getItems(name);
   if (!items) throw new Error("Prolly ratelimited.");
   const categorized = itypes.map((itemType) => ({
@@ -165,7 +170,6 @@ async function Items({ name }: SubComponentProps) {
 }
 
 async function Badges({ name }: SubComponentProps) {
-  if (!name) return null;
   const achivement = await getAchievements(name);
   if (!achivement) throw new Error("Prolly ratelimited.");
   const categorized = categories.map((c) => ({
